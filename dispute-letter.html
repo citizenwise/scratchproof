@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Free dispute letter - ScratchProof</title><link rel="stylesheet" href="style.css"><link rel="icon" href="favicon.ico" sizes="48x48"><link rel="icon" href="favicon.svg" type="image/svg+xml"><link rel="apple-touch-icon" href="apple-touch-icon.png"></head><body>
-<nav><a href="index.html">ScratchProof</a><a href="dispute-letter.html">Free dispute letter</a></nav><main>
+<nav><a href="index.html">ScratchProof™</a><a href="dispute-letter.html">Free dispute letter</a></nav><main>
 <h1>Free rental damage dispute letter</h1>
 <p>Fill in the details. The letter is made in your browser. Nothing is sent or stored anywhere.</p>
 <form id="f"><label for="company">Rental company</label><input id="company" required>
@@ -22,4 +22,4 @@ var r=ScratchLetter.generateLetter(v);$('err').hidden=r.ok;$('out').hidden=!r.ok
 if(r.ok)$('letter').value=r.text;else $('err').textContent='Please fill in: '+r.missing.join(', ');});
 $('copy').addEventListener('click',function(){var t=$('letter');t.select();if(navigator.clipboard)navigator.clipboard.writeText(t.value);else document.execCommand('copy');});
 $('dl').addEventListener('click',function(){var a=document.createElement('a');a.href=URL.createObjectURL(new Blob([$('letter').value],{type:'text/plain'}));a.download='dispute-letter.txt';a.click();});
-</script></main></body></html>
+</script></main><footer class="legal">© 2026 ScratchProof. ScratchProof™ and the ScratchProof logo are trademarks of ScratchProof. All rights reserved.</footer></body></html>

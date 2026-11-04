@@ -16,4 +16,8 @@ if(f.endsWith('.html'))assert(!/(src|href|action)=["']https?:|href="\//.test(t),
 {const s=readFileSync(new URL('index.html',import.meta.url),'utf8');
 assert(s.includes('<a class="btn" href="https://forms.gle/NnTyar7YSfQTSBLS7" target="_blank" rel="noopener noreferrer">'),'waitlist link');
 assert(!/<form|<iframe|TODO/.test(s),'no form/embed/TODO');}
+// brand notice: TM on the name in the nav and a copyright + trademark footer on every page
+for(const f of ['index.html','dispute-letter.html']){const s=readFileSync(new URL(f,import.meta.url),'utf8');
+assert(s.includes('<a href="index.html">ScratchProof™</a>'),f+' TM');
+assert(/<footer class="legal">© 2026 ScratchProof\. ScratchProof™ and the ScratchProof logo are trademarks of ScratchProof\. All rights reserved\.<\/footer>/.test(s),f+' footer');}
 console.log('all tests passed');

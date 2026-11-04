@@ -1,0 +1,25 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Free dispute letter - ScratchProof</title><link rel="stylesheet" href="style.css"></head><body>
+<nav><a href="index.html">ScratchProof</a><a href="dispute-letter.html">Free dispute letter</a></nav><main>
+<h1>Free rental damage dispute letter</h1>
+<p>Fill in the details. The letter is made in your browser. Nothing is sent or stored anywhere.</p>
+<form id="f"><label for="company">Rental company</label><input id="company" required>
+<label for="bookingRef">Booking reference</label><input id="bookingRef" required>
+<label for="pickupDate">Pickup date</label><input id="pickupDate" type="date" required>
+<label for="returnDate">Return date</label><input id="returnDate" type="date" required>
+<label for="amount">Amount billed (with currency)</label><input id="amount" placeholder="$440" required>
+<label for="region">Region</label><select id="region"><option value="US">US</option><option value="UK">UK</option><option value="EU">EU</option></select>
+<button type="submit">Make letter</button></form>
+<p id="err" class="note" hidden></p>
+<div id="out" hidden><label for="letter">Your letter</label><textarea id="letter" readonly></textarea>
+<button id="copy" type="button">Copy</button><button id="dl" type="button">Download .txt</button></div>
+<p class="muted">This is a general template, not legal advice. Rules and deadlines vary; check your card terms and local consumer authority.</p>
+<script src="letter.js"></script>
+<script>
+var $=function(i){return document.getElementById(i)};
+$('f').addEventListener('submit',function(e){e.preventDefault();
+var v={};['company','bookingRef','pickupDate','returnDate','amount','region'].forEach(function(k){v[k]=$(k).value;});
+var r=ScratchLetter.generateLetter(v);$('err').hidden=r.ok;$('out').hidden=!r.ok;
+if(r.ok)$('letter').value=r.text;else $('err').textContent='Please fill in: '+r.missing.join(', ');});
+$('copy').addEventListener('click',function(){var t=$('letter');t.select();if(navigator.clipboard)navigator.clipboard.writeText(t.value);else document.execCommand('copy');});
+$('dl').addEventListener('click',function(){var a=document.createElement('a');a.href=URL.createObjectURL(new Blob([$('letter').value],{type:'text/plain'}));a.download='dispute-letter.txt';a.click();});
+</script></main></body></html>

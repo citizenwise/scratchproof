@@ -1,0 +1,38 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self'; connect-src 'none'; form-action 'none'; base-uri 'none'"><meta name="referrer" content="no-referrer"><title>Verify a proof file - ScratchProof</title><meta name="description" content="Check a ScratchProof proof file in your browser: re-compute each seal's root hash and check its FreeTSA timestamp signature. Nothing is uploaded."><link rel="stylesheet" href="style.css"><link rel="icon" href="favicon.ico" sizes="48x48"><link rel="icon" href="favicon.svg" type="image/svg+xml"><link rel="apple-touch-icon" href="apple-touch-icon.png"></head><body>
+<nav><a href="index.html">ScratchProof™</a><a href="dispute-letter.html">Free dispute letter</a><a href="verify.html">Verify a proof</a><a href="privacy.html">Privacy</a><a href="terms.html">Terms</a></nav><main class="verify">
+<p class="eyebrow">Proof check</p>
+<h1>Check a ScratchProof seal</h1>
+<p class="lead">Drop the proof file from a Dispute Pack (it ends in <span class="mono">.scratchproof-proof.json</span>). This page re-computes every seal from the file and checks each timestamp signature against FreeTSA’s certificate.</p>
+<label class="drop" id="drop" for="file"><input id="file" type="file" accept=".json,application/json">
+<svg class="drop-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V4m0 0L7.5 8.5M12 4l4.5 4.5M5 14v4a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+<strong>Drop the proof file here</strong><span>or click to choose it</span><span class="file-name mono" id="file-name"></span></label>
+<p class="private"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 11V8a5 5 0 0 1 10 0v3M6 11h12v9H6z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg><span>The check runs in your browser. Nothing is uploaded: this page is not allowed to connect anywhere.</span></p>
+<p id="err" class="note is-bad" role="alert" hidden></p>
+<section id="result" hidden aria-live="polite">
+<div id="verdict" class="verdict"></div>
+<div id="seals"></div>
+<div id="links" class="card"></div>
+<div id="photos-card" class="card">
+<h3>Optional: check the original photos</h3>
+<p class="muted">Drop the original photos from the renter’s phone. Each one is fingerprinted (SHA-256) on this device and ticked off against the sealed list. They are not uploaded.</p>
+<label class="drop drop-small" id="photo-drop" for="photos"><input id="photos" type="file" multiple accept="image/*,video/*"><strong>Drop photos here</strong><span>or click to choose them</span></label>
+<p class="sub" id="photo-count"></p>
+<div id="unmatched"></div>
+</div>
+</section>
+<h2>What a match proves</h2>
+<div class="explain">
+<p><strong>Root hash matches.</strong> The sealed text in the file is exactly the text that was sealed on the phone. Change one character, one photo fingerprint or one time in it, and the hash no longer matches.</p>
+<p><strong>Timestamp signature checks.</strong> The sealed records existed, unchanged, by the timestamp time, according to an independent timestamp (RFC 3161, from FreeTSA). This page checks the signature against FreeTSA’s certificate, which is built into the page.</p>
+<p><strong>Seals are linked.</strong> The return and the agent’s acknowledgement each name the pickup’s root hash inside their own sealed text, so they belong to that pickup.</p>
+<p><strong>A photo matches.</strong> The photo is, byte for byte, the photo that was sealed. An edited, resized or re-sent copy (for example from a messaging app) does not match, even when it looks the same.</p>
+</div>
+<h2>What it does not prove</h2>
+<div class="explain">
+<p>A timestamp does not show when each photo was taken. The photo times and any location inside a seal come from the renter’s phone. A seal shows that the records existed, unchanged, by the timestamp time; it does not show who caused any damage.</p>
+<p>FreeTSA is a free service, not a qualified timestamp authority. This page does not check whether FreeTSA’s certificate was revoked. You can repeat the timestamp check with <span class="mono">openssl ts -verify</span> and the certificate from freetsa.org.</p>
+</div>
+<p class="muted">General information, not legal advice. The check uses the same code as the ScratchProof app.</p>
+<script src="verify-lib.js"></script>
+<script src="verify.js"></script>
+</main><footer class="legal">© 2026 ScratchProof. ScratchProof™ and the ScratchProof logo are trademarks of ScratchProof. All rights reserved.</footer></body></html>

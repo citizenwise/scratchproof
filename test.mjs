@@ -27,6 +27,10 @@ assert(s.includes('<a href="privacy.html">Privacy</a>')&&s.includes('<a href="te
 {const s=readFileSync(new URL('privacy.html',import.meta.url),'utf8');
 for(const w of ['No account','no analytics','FreeTSA','only the fingerprint','RevenueCat','encrypted on your phone','We do not sell','Delete the app','Last updated','Contact'])assert(s.includes(w),'privacy: '+w);
 assert(!/TODO|\[contact\]/i.test(s),'privacy: no placeholders');}
+// privacy: location (app PR 16) is optional, when in use only, sealed with the photos, kept on the phone and never sent
+{const s=readFileSync(new URL('privacy.html',import.meta.url),'utf8');
+for(const w of ['Location (optional)','only while you use the app','never in the background','sealed with the photos','stays on your phone','never sent anywhere','Skip, use time only','Location on sealed photos','no map'])assert(s.includes(w),'privacy location: '+w);
+const sent=s.slice(s.indexOf('<h2>What is sent'),s.indexOf('<h2>Permissions'));assert(sent.length>0&&!/location/i.test(sent),'privacy: location is not in what is sent');}
 // terms: honest limits of the seal, store billing, not legal advice
 {const s=readFileSync(new URL('terms.html',import.meta.url),'utf8');
 for(const w of ['not legal advice','renews automatically','Apple','Google Play','refund','does not prove when','Last updated','Contact'])assert(s.includes(w),'terms: '+w);

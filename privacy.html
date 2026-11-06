@@ -3,9 +3,11 @@
 <h1>Privacy</h1>
 <p class="muted">Last updated: 6 November 2026</p>
 <p><b>Who we are.</b> ScratchProof is made by Mayank Singh Kunwar (individual developer), 111, Vasudevpuram, RTO Road, Haldwani, Uttarakhand 263139, India, trading as Citizenwise. Contact: <a href="mailto:support@citizenwise.app">support@citizenwise.app</a>.</p>
-<p><b>In short.</b> No account, no analytics, no ads, no tracking. Your photos, videos, damage marks, bills and letters stay on your phone. We have no server that receives them.</p>
+<p><b>In short.</b> No account, no analytics, no ads, no tracking. Your photos, videos, damage marks, locations, bills and letters stay on your phone. We have no server that receives them.</p>
 <h2>What stays on your phone</h2>
 <p>Everything you capture or type in the app is encrypted on your phone (AES-256-GCM). The key is kept in the phone's secure storage (iOS Keychain or Android Keystore). On iPhone, an encrypted iCloud or computer backup can carry the key to your next iPhone. Nothing leaves the phone unless you share it yourself, for example a Dispute Pack PDF or a backup file.</p>
+<h2>Location (optional)</h2>
+<p>The first time you start a pickup or return, the app asks whether to add where the photos were taken. Choose "Skip, use time only" and nothing about your location is read; we ask again at most once every 30 days, and you can switch it on or off at any time under "Location on sealed photos" in the app's Settings. If you allow it, the app reads your location only while you use the app, never in the background: one reading when you seal a pickup or a return (latitude, longitude, how accurate the phone says it is, the time of the reading, and on Android whether the phone flagged it as a mocked location). That reading is sealed with the photos, encrypted on your phone, and stays on your phone. It is never sent anywhere by the app: there is no map service and no address lookup, and the Dispute Pack prints the coordinates as plain text, with no map. It only leaves the phone inside a Dispute Pack or backup file that you share yourself, or when you tap "Open in maps" on the Dispute Pack screen, which hands the coordinates to your phone's own maps app. If you allow only an approximate location, the seal records an approximate area.</p>
 <h2>What is sent, and to whom</h2>
 <ul>
 <li><b>Trusted timestamp (FreeTSA).</b> When you seal photos, the app sends only the fingerprint (a SHA-256 hash) of the sealed record to the FreeTSA time-stamping service at freetsa.org. A fingerprint cannot be turned back into your photos. FreeTSA sees your internet address, as any website does.</li>
@@ -13,7 +15,7 @@
 <li><b>Backups you make.</b> "Back up / move to a new phone" makes a file locked with a passphrase you choose. Where you save or send it (Files, Drive, email) is up to you. We cannot open it and cannot recover a forgotten passphrase.</li>
 </ul>
 <h2>Permissions</h2>
-<p>Camera: to take the photos and the silent return video (the app never uses the microphone). Motion sensors: to take a photo when the phone is steady. Notifications: reminders made on your phone, never sent from a server. You can turn each one off in your phone's settings.</p>
+<p>Camera: to take the photos and the silent return video (the app never uses the microphone). Location (optional, only while you use the app): to seal where the photos were taken, as described above. Motion sensors: to take a photo when the phone is steady. Notifications: reminders made on your phone, never sent from a server. You can turn each one off in your phone's settings.</p>
 <h2>What we do not do</h2>
 <p>We do not sell or share your data, we have no analytics or advertising tools in the app, and we do not build profiles. The app is not directed at children under 13.</p>
 <h2>Your choices and rights</h2>

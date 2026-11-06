@@ -91,4 +91,7 @@ assert(page.includes("connect-src 'none'"),'CSP blocks every connection');
 assert(page.includes('<script src="verify-lib.js"></script>')&&page.includes('<script src="verify.js"></script>')&&!/<script>/.test(page),'external scripts only');
 assert(!/innerHTML|outerHTML|insertAdjacentHTML|document\.write|eval\(|new Function/.test(glue),'file content is rendered as text only');
 assert(/<input[^>]+type="file"[^>]+accept="[^"]*\.json/.test(page),'proof file picker');}
+// wording rule shared with the app: never "trusted" or "genuine" (red team 2, M4)
+for(const f of ['index.html','dispute-letter.html','privacy.html','terms.html','verify.html']){const s=readFileSync(new URL(f,import.meta.url),'utf8');
+assert(!/trusted|genuine/i.test(s),f+': no trusted/genuine');}
 console.log('all tests passed');

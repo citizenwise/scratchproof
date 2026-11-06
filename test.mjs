@@ -27,6 +27,12 @@ assert(s.includes('<a href="privacy.html">Privacy</a>')&&s.includes('<a href="te
 {const s=readFileSync(new URL('privacy.html',import.meta.url),'utf8');
 for(const w of ['No account','no analytics','FreeTSA','only the fingerprint','RevenueCat','encrypted on your phone','We do not sell','Delete the app','Last updated','Contact'])assert(s.includes(w),'privacy: '+w);
 assert(!/TODO|\[contact\]/i.test(s),'privacy: no placeholders');}
+// privacy: the photo zip (a plaintext copy, only when the user shares it) and Settings > Delete all data
+{const s=readFileSync(new URL('privacy.html',import.meta.url),'utf8');
+const kept=s.slice(s.indexOf('<h2>What stays on your phone'),s.indexOf('<h2>Location'));
+for(const w of ['Nothing leaves the phone unless you share it yourself','Share photos (zip)','not encrypted','deleted from the phone after sharing'])assert(kept.includes(w),'privacy zip: '+w);
+const rights=s.slice(s.indexOf('<h2>Your choices'));
+for(const w of ['Delete all data','Purchases stay with your App Store or Google Play account'])assert(rights.includes(w),'privacy delete: '+w);}
 // privacy: location (app PR 16) is optional, when in use only, sealed with the photos, kept on the phone and never sent
 {const s=readFileSync(new URL('privacy.html',import.meta.url),'utf8');
 for(const w of ['Location (optional)','only while you use the app','never in the background','sealed with the photos','stays on your phone','never sent anywhere','Skip, use time only','Location on sealed photos','no map'])assert(s.includes(w),'privacy location: '+w);

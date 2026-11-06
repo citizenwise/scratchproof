@@ -145,4 +145,9 @@ assert(!/<script>/.test(s)&&!/ on[a-z]+=/.test(s),f+' no inline script');}
 assert(readFileSync(new URL('dispute-letter.html',import.meta.url),'utf8').includes('<script src="dispute-letter.js"></script>'),'letter glue in a file');
 assert(/top===self|top!==self/.test(readFileSync(new URL('verify.js',import.meta.url),'utf8').replace(/window\./g,'')),'frame-buster');
 const glue=readFileSync(new URL('verify.js',import.meta.url),'utf8');assert(!/Agent’s acknowledgement|A ScratchProof pickup record/.test(glue),'old wording gone');}
+// red team 2 L3/L4: privacy claims exact; CSP on the legal pages too
+{const s=readFileSync(new URL('privacy.html',import.meta.url),'utf8');
+for(const w of ['unfinished pickup','to get a quick fix ready','Apple’s maps website','earlier iCloud or computer backups'])assert(s.includes(w),'privacy exact: '+w);}
+for(const f of ['privacy.html','terms.html']){const s=readFileSync(new URL(f,import.meta.url),'utf8');
+assert(s.includes('<meta http-equiv="Content-Security-Policy"'),f+' CSP');}
 console.log('all tests passed');

@@ -24,7 +24,8 @@
 <div class="explain">
 <p><strong>Root hash matches.</strong> The sealed text in the file is exactly the text that was sealed on the phone. Change one character, one photo fingerprint or one time in it, and the hash no longer matches.</p>
 <p><strong>Timestamp signature checks.</strong> The sealed records existed, unchanged, by the timestamp time, according to an independent timestamp (RFC 3161, from FreeTSA). This page checks the signature against FreeTSA’s certificate, which is built into the page.</p>
-<p><strong>Seals are linked.</strong> The return and the agent’s acknowledgement each name the pickup’s root hash inside their own sealed text, so they belong to that pickup.</p>
+<p><strong>Seals are linked.</strong> The return and the agent’s answer (a signature or a refusal to sign) each name the pickup’s root hash inside their own sealed text, and neither was stamped before the pickup, so they belong to that pickup.</p>
+<p><strong>Times agree.</strong> Each seal holds the time the phone gave when it was sealed. When that time is more than 10 minutes from the timestamp time, the page warns: the phone clock was wrong, or the seal was stamped later, and only the timestamp time can be relied on. A seal without a timestamp is a warning too: its time rests on the phone clock alone.</p>
 <p><strong>A photo matches.</strong> The photo is, byte for byte, the photo that was sealed. An edited, resized or re-sent copy (for example from a messaging app) does not match, even when it looks the same.</p>
 </div>
 <h2>What it does not prove</h2>

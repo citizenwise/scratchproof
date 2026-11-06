@@ -437,12 +437,11 @@
     return ok([first, head - first * 40, ...rest].join("."));
   }
   function integerMagnitude(node) {
-    const first = node.value[0];
+    const [first, second] = node.value;
     if (!isUniversal(node, 2) || first === void 0) return bad4("malformed INTEGER");
     if (first >= 128) return bad4("negative INTEGER");
-    let start = 0;
-    while (start < node.value.length - 1 && node.value[start] === 0) start += 1;
-    return ok(node.value.subarray(start));
+    if (first !== 0 || second === void 0) return ok(node.value);
+    return second >= 128 ? ok(node.value.subarray(1)) : bad4("INTEGER not minimal");
   }
 
   // packages/services/seal/src/gen-time.ts
@@ -494,10 +493,15 @@
     if (!octets.ok) return octets;
     return octets.value.cls === 0 && octets.value.tag === 4 ? decodeDer(octets.value.value) : fail("invalid", "eContent is not an OCTET STRING");
   }
+  var plainParams = (alg) => {
+    const [, params, ...more] = alg;
+    return more.length === 0 && (params === void 0 || params.cls === 0 && params.tag === 5 && params.value.length === 0);
+  };
   function checkImprint(node, rootHash) {
     const kids2 = seqChildren(node, "messageImprint");
     const alg = kids2.ok ? seqChildren(kids2.value[0], "hashAlgorithm") : kids2;
-    if (!kids2.ok || !alg.ok) return fail("invalid", "messageImprint is malformed");
+    if (!kids2.ok || !alg.ok || kids2.value.length !== 2 || !plainParams(alg.value))
+      return fail("invalid", "messageImprint is malformed");
     const hashed = kids2.value[1];
     if (hashed === void 0 || hashed.cls !== 0 || hashed.tag !== 4)
       return fail("invalid", "hashedMessage is missing");
@@ -540,9 +544,10 @@
   function readTstInfo(tst, expected, token) {
     const kids2 = seqChildren(tst, "TSTInfo");
     if (!kids2.ok) return kids2;
-    const [version, , imprint, serial, time, ...rest] = kids2.value;
+    const [version, policy, imprint, serial, time, ...rest] = kids2.value;
     const v = version === void 0 ? void 0 : integerMagnitude(version);
     if (v?.ok !== true || v.value.length !== 1 || v.value[0] !== 1) return fail("invalid", "unsupported TSTInfo version");
+    if (policy === void 0 || !decodeOid(policy).ok) return fail("invalid", "TSTInfo policy is not an OID");
     const checked = checkImprint(imprint, expected.rootHash);
     if (!checked.ok) return checked;
     const serialMag = serial === void 0 ? void 0 : integerMagnitude(serial);
@@ -1317,6 +1322,23 @@
       ...tsaName === void 0 ? {} : { tsaName }
     };
   }
+  function factsOf(sealed) {
+    if (sealed === void 0) return {};
+    if (sealed.kind === "addendum") {
+      const { acknowledgedAt, declined, agentName, signatureSvgPath } = sealed.value;
+      const answer = { declined: declined === true, signed: signatureSvgPath !== void 0 };
+      return { phoneTime: acknowledgedAt, answer: agentName === void 0 ? answer : { ...answer, agentName } };
+    }
+    const { createdAt, kind, damage, location: location2 } = sealed.value;
+    const contents = { kind, marks: damage?.length ?? 0 };
+    return { phoneTime: createdAt, contents: location2 === void 0 ? contents : { ...contents, location: location2 } };
+  }
+  function timingOf(phoneTime, stamp) {
+    if (stamp.status === "none") return { warnings: ["unstamped"] };
+    if (stamp.status !== "checked" || phoneTime === void 0) return { warnings: [] };
+    const clockGapMs = Date.parse(stamp.genTime) - Date.parse(phoneTime);
+    return { clockGapMs, warnings: Math.abs(clockGapMs) > CLOCK_SKEW_WARN_MS ? ["clock"] : [] };
+  }
   async function checkSeal(seal, deps) {
     const computed = await fingerprintOf(new TextEncoder().encode(seal.manifest), deps.digester);
     const sealed = sealedOf(seal.part, seal.manifest);
@@ -1325,6 +1347,7 @@
     const timestamp = await stampOf(seal, computed, deps);
     const hashMatches = computed === seal.rootHash;
     const wellFormed = sealed !== void 0;
+    const facts = factsOf(sealed);
     const check = {
       part: seal.part,
       rootHash: seal.rootHash,
@@ -1336,7 +1359,9 @@
       photos,
       fingerprintsMatch,
       timestamp,
-      ok: hashMatches && wellFormed && fingerprintsMatch && timestamp.status === "checked"
+      ...facts,
+      ...timingOf(facts.phoneTime, timestamp),
+      ok: hashMatches && wellFormed && fingerprintsMatch && timestamp.status !== "failed"
     };
     return { check, sealed };
   }
@@ -1357,6 +1382,15 @@
       return [];
     });
   }
+  var stampedAt = (seal) => seal?.timestamp.status === "checked" ? Date.parse(seal.timestamp.genTime) : void 0;
+  function orderOf(seals) {
+    const pickupAt = stampedAt(seals.find((s) => s.part === "pickup"));
+    return seals.flatMap((s) => {
+      const at = stampedAt(s);
+      if (s.part === "pickup" || pickupAt === void 0 || at === void 0) return [];
+      return [{ part: s.part, inOrder: at >= pickupAt }];
+    });
+  }
   async function verifyProofFile(text, deps) {
     const file = parseProofFile(text);
     if (!file.ok) return file;
@@ -1365,8 +1399,10 @@
       for (const seal of file.value.seals) checked.push(await checkSeal(seal, deps));
       const seals = checked.map((c) => c.check);
       const links = linksOf(checked);
-      const allOk = seals.every((s) => s.ok) && links.every((l) => l.linked);
-      return ok({ seals, links, ok: allOk });
+      const order = orderOf(seals);
+      const warnings = seals.reduce((n, s) => n + s.warnings.length, 0);
+      const allOk = seals.every((s) => s.ok) && links.every((l) => l.linked) && order.every((o) => o.inOrder);
+      return ok({ seals, links, order, warnings, ok: allOk });
     } catch (cause) {
       return err(appError("internal", "the digest could not be computed", cause));
     }

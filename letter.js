@@ -9,7 +9,8 @@ f=f||{};var miss=[];
 ['company','bookingRef','pickupDate','returnDate','amount','region'].forEach(function(k){if(!f[k]||!String(f[k]).trim())miss.push(k);});
 if(f.region&&!REG[f.region]&&miss.indexOf('region')<0)miss.push('region');
 if(miss.length)return{ok:false,missing:miss,text:''};
-var r=REG[f.region],c=esc(String(f.company).trim()),b=esc(String(f.bookingRef).trim()),p=esc(String(f.pickupDate).trim()),d=esc(String(f.returnDate).trim()),a=esc(String(f.amount).trim());
+// Plain text for a textarea value and a .txt file: never HTML-escaped (red team 2 L5). Any HTML built from it must escape.
+var r=REG[f.region],c=String(f.company).trim(),b=String(f.bookingRef).trim(),p=String(f.pickupDate).trim(),d=String(f.returnDate).trim(),a=String(f.amount).trim();
 var t=['To: '+c+' - Customer Relations / Damage Claims','','Re: Booking reference '+b+' - charge of '+a+'','',
 'Dear Sir or Madam,','',
 'I rented a vehicle from you (booking reference '+b+') from '+p+' to '+d+'. I have been billed '+a+' for alleged damage. I do not accept this charge at this time, and I ask you to suspend collection while it is reviewed.','',

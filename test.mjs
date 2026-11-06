@@ -10,7 +10,7 @@ assert(!generateLetter({...base,region:'XX'}).ok);
 const e=generateLetter({...base,company:'<script>alert(1)</script>',region:'US'}).text;
 assert(e.includes('To: <script>alert(1)</script> - Customer')&&!e.includes('&lt;'),'letter text is raw');
 assert(generateLetter({...base,company:'AT&T Rent "Best" O\'Neil',region:'US'}).text.includes('To: AT&T Rent "Best" O\'Neil - '),'AT&T');
-for(const f of ['index.html','dispute-letter.html','privacy.html','terms.html','verify.html','letter.js','verify.js','verify-lib.js','style.css']){const s=readFileSync(new URL(f,import.meta.url),'utf8');
+for(const f of ['index.html','dispute-letter.html','privacy.html','terms.html','verify.html','letter.js','dispute-letter.js','verify.js','verify-lib.js','style.css']){const s=readFileSync(new URL(f,import.meta.url),'utf8');
 assert(!/fetch\(|XMLHttpRequest|sendBeacon|WebSocket|EventSource|importScripts|navigator\.share/.test(s),f);
 const WL='https://forms.gle/NnTyar7YSfQTSBLS7';const t=s.split(WL).join('');
 if(f.endsWith('.html'))assert(!/(src|href|action)=["']https?:|href="\//.test(t),f+' abs link');}
@@ -81,7 +81,7 @@ assert.equal(row('Proof code').value,pickupOf(valid).proofCode);assert.equal(row
 assert(/^6 Nov 2026, \d\d:\d\d:\d\d UTC$/.test(row('Timestamp time').value),row('Timestamp time').value);
 const bad=V.sealRows(pickupOf(tt));assert(bad.some(r=>r.state==='bad'&&r.value.includes('the time stamp signature does not verify')),'reason shown');
 assert.equal(V.sealRows(pickupOf(tm)).find(r=>r.label==='Root hash').state,'bad');
-assert.deepEqual(V.linkRows(valid).map(r=>r.state),['ok','ok']);assert.deepEqual(V.linkRows(tm).map(r=>r.state),['bad','bad']);
+assert.deepEqual(V.linkRows(valid).map(r=>r.state),['ok','ok','ok','ok']);assert.deepEqual(V.linkRows(tm).map(r=>r.state),['bad','bad']);
 const m=V.matchPhotos(valid,[...prints,{name:'other.jpg',hex:'0'.repeat(64)}]);
 assert.equal(m.matched[pickupOf(valid).photos[0].sha256Hex],'front.png');assert.deepEqual(m.unmatched,['other.jpg']);
 assert.equal(V.partName('agent'),'Agent’s answer');
@@ -143,6 +143,6 @@ for(const f of ['index.html','dispute-letter.html','verify.html']){const s=readF
 assert(/<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self'; connect-src 'none'; form-action 'none'; base-uri 'none'">/.test(s),f+' CSP');
 assert(!/<script>/.test(s)&&!/ on[a-z]+=/.test(s),f+' no inline script');}
 assert(readFileSync(new URL('dispute-letter.html',import.meta.url),'utf8').includes('<script src="dispute-letter.js"></script>'),'letter glue in a file');
-assert(/top!==self|top !== self/.test(readFileSync(new URL('verify.js',import.meta.url),'utf8').replace(/window\./g,'')),'frame-buster');
+assert(/top===self|top!==self/.test(readFileSync(new URL('verify.js',import.meta.url),'utf8').replace(/window\./g,'')),'frame-buster');
 const glue=readFileSync(new URL('verify.js',import.meta.url),'utf8');assert(!/Agent’s acknowledgement|A ScratchProof pickup record/.test(glue),'old wording gone');}
 console.log('all tests passed');

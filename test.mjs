@@ -31,6 +31,12 @@ assert(!/TODO|\[contact\]/i.test(s),'privacy: no placeholders');}
 {const s=readFileSync(new URL('privacy.html',import.meta.url),'utf8');
 for(const w of ['Location (optional)','only while you use the app','never in the background','sealed with the photos','stays on your phone','never sent anywhere','Skip, use time only','Location on sealed photos','no map'])assert(s.includes(w),'privacy location: '+w);
 const sent=s.slice(s.indexOf('<h2>What is sent'),s.indexOf('<h2>Permissions'));assert(sent.length>0&&!/location/i.test(sent),'privacy: location is not in what is sent');}
+// privacy: the agreement scan (app agreement PR) reads the text on the phone; nothing is sent and the text is not kept
+{const s=readFileSync(new URL('privacy.html',import.meta.url),'utf8');
+const scan=s.slice(s.indexOf('<h2>Agreement scan'),s.indexOf('<h2>What is sent'));
+for(const w of ['Agreement scan (optional)','text recognition runs on your phone','nothing is sent','no model is downloaded','usage reports','The recognised text is not kept','encrypted on your phone','not sealed'])assert(scan.includes(w),'privacy agreement: '+w);
+const sent=s.slice(s.indexOf('<h2>What is sent'),s.indexOf('<h2>Permissions'));assert(sent.length>0&&!/agreement/i.test(sent),'privacy: the agreement is not in what is sent');
+assert(s.slice(s.indexOf('<h2>Permissions')).includes('photo of your rental agreement'),'privacy: camera for the agreement');}
 // terms: honest limits of the seal, store billing, not legal advice
 {const s=readFileSync(new URL('terms.html',import.meta.url),'utf8');
 for(const w of ['not legal advice','renews automatically','Apple','Google Play','refund','does not prove when','Last updated','Contact'])assert(s.includes(w),'terms: '+w);

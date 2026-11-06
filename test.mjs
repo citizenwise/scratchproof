@@ -6,8 +6,10 @@ for(const w of ['AB123','$440','repair invoice','damage sheet','not legal advice
 assert(generateLetter({...base,region:'US'}).text!==generateLetter({...base,region:'UK'}).text);
 for(const k of Object.keys(base)){const x={...base,region:'US'};delete x[k];const r=generateLetter(x);assert(!r.ok&&r.missing.includes(k),k);}
 assert(!generateLetter({...base,region:'XX'}).ok);
+// red team 2 L5: the letter is plain text for a textarea value: never HTML-escaped (AT&T stays AT&T); no HTML is built from it
 const e=generateLetter({...base,company:'<script>alert(1)</script>',region:'US'}).text;
-assert(!e.includes('<script>')&&e.includes('&lt;script&gt;'));
+assert(e.includes('To: <script>alert(1)</script> - Customer')&&!e.includes('&lt;'),'letter text is raw');
+assert(generateLetter({...base,company:'AT&T Rent "Best" O\'Neil',region:'US'}).text.includes('To: AT&T Rent "Best" O\'Neil - '),'AT&T');
 for(const f of ['index.html','dispute-letter.html','privacy.html','terms.html','verify.html','letter.js','verify.js','verify-lib.js','style.css']){const s=readFileSync(new URL(f,import.meta.url),'utf8');
 assert(!/fetch\(|XMLHttpRequest|sendBeacon|WebSocket|EventSource|importScripts|navigator\.share/.test(s),f);
 const WL='https://forms.gle/NnTyar7YSfQTSBLS7';const t=s.split(WL).join('');
@@ -82,7 +84,7 @@ assert.equal(V.sealRows(pickupOf(tm)).find(r=>r.label==='Root hash').state,'bad'
 assert.deepEqual(V.linkRows(valid).map(r=>r.state),['ok','ok']);assert.deepEqual(V.linkRows(tm).map(r=>r.state),['bad','bad']);
 const m=V.matchPhotos(valid,[...prints,{name:'other.jpg',hex:'0'.repeat(64)}]);
 assert.equal(m.matched[pickupOf(valid).photos[0].sha256Hex],'front.png');assert.deepEqual(m.unmatched,['other.jpg']);
-assert.equal(V.partName('agent'),'Agent’s acknowledgement');
+assert.equal(V.partName('agent'),'Agent’s answer');
 // honest wording, same as the app's; nothing leaves the browser
 const page=readFileSync(new URL('verify.html',import.meta.url),'utf8');const glue=readFileSync(new URL('verify.js',import.meta.url),'utf8');
 for(const w of ['runs in your browser','Nothing is uploaded','existed, unchanged','independent timestamp (RFC 3161, from FreeTSA)','does not show when each photo was taken','not a qualified timestamp authority','.scratchproof-proof.json','not legal advice'])assert(page.includes(w),'verify wording: '+w);
@@ -94,4 +96,53 @@ assert(/<input[^>]+type="file"[^>]+accept="[^"]*\.json/.test(page),'proof file p
 // wording rule shared with the app: never "trusted" or "genuine" (red team 2, M4)
 for(const f of ['index.html','dispute-letter.html','privacy.html','terms.html','verify.html']){const s=readFileSync(new URL(f,import.meta.url),'utf8');
 assert(!/trusted|genuine/i.test(s),f+': no trusted/genuine');}
+// red team 2 (app PR "Red-team 2 fixes"): times, stamp order, the agent's answer, warnings, contents, photo reading
+{const vm=await import('vm');const {webcrypto}=await import('crypto');
+const box={crypto:webcrypto,TextEncoder,TextDecoder};vm.createContext(box);
+vm.runInContext(readFileSync(new URL('verify-lib.js',import.meta.url),'utf8'),box);const lib=box.ScratchProofVerify;
+const fx=n=>readFileSync(new URL('test-fixtures/proof-'+n+'.scratchproof-proof.json',import.meta.url),'utf8');
+const run=async n=>{const r=await lib.verify(fx(n));assert(r.ok,n+' parses');return r.value;};
+const {ScratchVerifyView:V}=createRequire(import.meta.url)('./verify.js');
+const part=(c,p)=>c.seals.find(s=>s.part===p);
+const valid=await run('valid'),late=await run('backdated'),signed=await run('agent-signed'),bare=await run('unstamped');
+// M2: a back-dated pickup stamped after its return is a failure with its reason, and both clocks get a warning row
+assert(!late.ok,'backdated fails');assert.equal(V.summarize(late).title,'Something does not match');
+const clock=V.sealRows(part(late,'pickup')).find(r=>r.label==='Phone clock');
+assert(clock&&clock.state==='warn'&&/^Phone clock differed from the timestamp by 36 days\./.test(clock.value),'clock row: '+(clock&&clock.value));
+const order=V.linkRows(late).find(r=>/stamp order/.test(r.label));
+assert(order&&order.state==='bad'&&/before the pickup/.test(order.value),'order row');
+assert(!V.sealRows(part(valid,'pickup')).some(r=>r.label==='Phone clock'),'no clock row when the times agree');
+assert.deepEqual(V.linkRows(valid).map(r=>r.state),['ok','ok','ok','ok'],'links and stamp order ok');
+assert.equal(V.summarize(valid).title,'Every check passed');assert.equal(V.summarize(valid).warn,false);
+// M2/L2: warnings make "All checks passed, with warnings", never "Every check passed"; an unstamped seal is amber, not red
+assert(bare.ok,'unstamped passes');const sb=V.summarize(bare);
+assert.equal(sb.title,'All checks passed, with warnings');assert.equal(sb.warn,true);assert(/1 warning/.test(sb.detail),sb.detail);
+assert.equal(V.sealPill(part(bare,'agent')).text,'Passed, with warnings');assert.equal(V.sealPill(part(bare,'agent')).state,'warn');
+assert.equal(V.sealPill(part(valid,'pickup')).text,'All checks passed');
+// M3: a declined answer is titled "Agent declined to sign", never an acknowledgement; a signed one names who it is attributed to
+const dec=part(valid,'agent');assert.equal(V.sealTitle(dec),'Agent declined to sign');
+const decRows=V.sealRows(dec);assert(decRows.some(r=>r.value==='The agent declined to sign (sealed)'),'declined row');
+for(const r of [...decRows,...V.linkRows(valid)])assert(!/acknowledg/i.test(r.label+' '+r.value),'no acknowledgement: '+r.label+r.value);
+assert(signed.ok,'signed passes');const sig=part(signed,'agent');assert.equal(V.sealTitle(sig),'Agent’s answer: signed');
+assert(V.sealRows(sig).some(r=>r.value==='A signature was drawn on the renter’s phone, attributed to Dana Ruiz'),'signed row');
+assert.equal(V.sealTitle(part(valid,'pickup')),'Pickup');
+// M2: the sealed-text row says what it is, not more
+assert.equal(V.sealRows(part(valid,'pickup')).find(r=>r.label==='Sealed text').value,'Has the form of a ScratchProof pickup record');
+// L7: what the seal contains
+assert.equal(V.sealRows(part(valid,'pickup')).find(r=>r.label==='Sealed contents').value,'Car · no damage marks · no location');
+// L7: a photo that matches inside a failed seal is neutral, not green
+const tm=await run('tampered-manifest');const hit={sha256Hex:part(tm,'pickup').photos[0].sha256Hex};
+assert.equal(V.photoRow(part(tm,'pickup'),part(tm,'pickup').photos[0],{[hit.sha256Hex]:'front.png'}).state,'info');
+assert.equal(V.photoRow(part(valid,'pickup'),part(valid,'pickup').photos[0],{[part(valid,'pickup').photos[0].sha256Hex]:'front.png'}).state,'ok');
+// L11: dropped photos are fingerprinted one at a time
+let live=0,most=0;const files=[1,2,3,4].map(n=>({name:'f'+n}));
+const prints=await V.fingerprintAll(files,f=>{live++;most=Math.max(most,live);return new Promise(r=>setTimeout(()=>{live--;r({name:f.name,hex:'x'});},5));});
+assert.equal(most,1,'one at a time');assert.deepEqual(prints.map(p=>p.name),['f1','f2','f3','f4']);
+// L9: CSP meta and no inline script on the pages this PR owns; the verify page refuses to be framed
+for(const f of ['index.html','dispute-letter.html','verify.html']){const s=readFileSync(new URL(f,import.meta.url),'utf8');
+assert(/<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self'; connect-src 'none'; form-action 'none'; base-uri 'none'">/.test(s),f+' CSP');
+assert(!/<script>/.test(s)&&!/ on[a-z]+=/.test(s),f+' no inline script');}
+assert(readFileSync(new URL('dispute-letter.html',import.meta.url),'utf8').includes('<script src="dispute-letter.js"></script>'),'letter glue in a file');
+assert(/top!==self|top !== self/.test(readFileSync(new URL('verify.js',import.meta.url),'utf8').replace(/window\./g,'')),'frame-buster');
+const glue=readFileSync(new URL('verify.js',import.meta.url),'utf8');assert(!/Agent’s acknowledgement|A ScratchProof pickup record/.test(glue),'old wording gone');}
 console.log('all tests passed');
